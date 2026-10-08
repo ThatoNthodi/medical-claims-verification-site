@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Medical Claims and Billing Verification Tool</title>
+<meta name="description" content="Find billing errors before the medical aid does. A claims check for South African practices that flags problem claims, explains why, and leaves every decision to your team.">
+<meta name="theme-color" content="#F6F8F7">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231B6B67'/%3E%3Cpath d='M17 33l10 10 20-23' fill='none' stroke='white' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --paper:#F6F8F7; --surface:#FFFFFF; --ink:#12232A; --muted:#51656B; --line:#D5DDDB;
+    --teal:#1B6B67; --teal-ink:#FFFFFF; --pen:#B83232; --pen-soft:#FBEDEC;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper:#0F1B20; --surface:#16262C; --ink:#E7EFEE; --muted:#9DB0B3; --line:#2A3C42;
+      --teal:#4FB3AC; --teal-ink:#08201F; --pen:#FF8A80; --pen-soft:#2B1B1D;
+    }
+  }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { margin:0; background:var(--paper); color:var(--ink); font:17px/1.6 var(--sans);
+         -webkit-font-smoothing:antialiased; }
+  a { color:var(--teal); }
+  :focus-visible { outline:3px solid var(--teal); outline-offset:3px; border-radius:4px; }
+  .wrap { max-width:1080px; margin:0 auto; padding:0 24px; }
+  h1,h2,h3 { font-family:var(--serif); font-weight:700; line-height:1.15; margin:0; letter-spacing:-0.01em; }
+  h2 { font-size:clamp(1.6rem, 3.2vw, 2.1rem); }
+  h3 { font-size:1.15rem; }
+  p { margin:0 0 1em; }
+  .lede { font-size:1.15rem; color:var(--muted); max-width:34em; }
+
+  header.top { border-bottom:1px solid var(--line); }
+  header.top .wrap { display:flex; align-items:center; justify-content:space-between; gap:16px; padding-top:14px; padding-bottom:14px; }
+  .brand { font-family:var(--serif); font-weight:700; font-size:1.05rem; text-decoration:none; color:var(--ink); }
+  nav a { margin-left:20px; color:var(--muted); text-decoration:none; font-size:.95rem; }
+  nav a:hover { color:var(--ink); }
+  @media (max-width:640px){ nav a.opt { display:none; } }
+
+  .btn { display:inline-block; padding:12px 22px; border-radius:6px; font-weight:600; text-decoration:none; font-size:1rem; border:2px solid var(--teal); }
+  .btn.primary { background:var(--teal); color:var(--teal-ink); }
+  .btn.ghost { color:var(--teal); background:transparent; }
+  .btn:hover { filter:brightness(1.08); }
+
+  /* hero */
+  .hero { padding:64px 0 72px; }
+  .hero .wrap { display:grid; grid-template-columns:1.05fr 1fr; gap:56px; align-items:center; }
+  .hero h1 { font-size:clamp(2.2rem, 5vw, 3.4rem); margin-bottom:20px; }
+  .hero .cta { display:flex; gap:12px; flex-wrap:wrap; margin:28px 0 18px; }
+  .status { font-size:.92rem; color:var(--muted); border-left:3px solid var(--line); padding-left:12px; max-width:34em; }
+  @media (max-width:860px){ .hero .wrap { grid-template-columns:1fr; gap:40px; } .hero { padding:40px 0 48px; } }
+
+  /* the claim ticket */
+  .ticket { background:var(--surface); border:1px solid var(--line); border-radius:4px; box-shadow:0 1px 0 var(--line), 0 12px 28px -18px rgba(18,35,42,.45); }
+  .ticket header { display:flex; justify-content:space-between; gap:12px; padding:12px 18px; border-bottom:1px solid var(--line); font-size:.85rem; color:var(--muted); }
+  .ticket dl { margin:0; padding:6px 18px 2px; }
+  .ticket .row { display:flex; justify-content:space-between; gap:16px; padding:9px 0; border-bottom:1px dashed var(--line); }
+  .ticket dt { color:var(--muted); font-size:.92rem; }
+  .ticket dd { margin:0; font-variant-numeric:tabular-nums; text-align:right; }
+  .amount { position:relative; display:inline-block; padding:0 6px; font-weight:700; }
+  .amount svg { position:absolute; left:-10px; top:-9px; width:calc(100% + 20px); height:calc(100% + 18px); overflow:visible; pointer-events:none; }
+  .amount ellipse { fill:none; stroke:var(--pen); stroke-width:2; stroke-linecap:round; stroke-dasharray:1; stroke-dashoffset:0; }
+  @media (prefers-reduced-motion:no-preference){
+    .amount ellipse { stroke-dashoffset:1; animation:draw 1.1s .6s ease-out forwards; }
+    @keyframes draw { to { stroke-dashoffset:0; } }
+  }
+  .flag { margin:14px 18px 6px; padding:12px 14px; background:var(--pen-soft); border-left:4px solid var(--pen); }
+  .flag strong { display:block; font-family:var(--serif); color:var(--pen); margin-bottom:4px; }
+  .flag p { margin:0; font-size:.95rem; }
+  .decide { display:flex; gap:8px; flex-wrap:wrap; padding:12px 18px 16px; }
+  .decide span { font-size:.85rem; padding:5px 11px; border:1px solid var(--line); border-radius:4px; color:var(--muted); }
+  .caption { font-size:.82rem; color:var(--muted); margin:10px 2px 0; }
+
+  section { padding:64px 0; border-top:1px solid var(--line); }
+  section > .wrap > h2 { margin-bottom:12px; }
+  section > .wrap > .lede { margin-bottom:36px; }
+
+  /* steps */
+  ol.steps { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(4,1fr); gap:0; counter-reset:s; }
+  ol.steps li { counter-increment:s; padding:0 24px 0 0; position:relative; }
+  ol.steps li::before { content:counter(s); display:block; font-family:var(--serif); font-size:2.2rem; color:var(--teal); line-height:1; margin-bottom:12px; }
+  ol.steps li + li { padding-left:24px; border-left:1px solid var(--line); }
+  ol.steps h3 { margin-bottom:8px; }
+  ol.steps p { color:var(--muted); font-size:.95rem; margin:0; }
+  @media (max-width:900px){ ol.steps { grid-template-columns:1fr 1fr; row-gap:32px; } ol.steps li:nth-child(3) { border-left:0; padding-left:0; } }
+  @media (max-width:560px){ ol.steps { grid-template-columns:1fr; } ol.steps li, ol.steps li + li { padding-left:0; border-left:0; } }
+
+  /* checks table */
+  table.checks { width:100%; border-collapse:collapse; }
+  table.checks th, table.checks td { text-align:left; vertical-align:top; padding:14px 16px 14px 0; border-bottom:1px solid var(--line); }
+  table.checks th { font-family:var(--serif); width:24%; font-size:1.02rem; }
+  table.checks td { color:var(--muted); }
+  @media (max-width:640px){ table.checks th, table.checks td { display:block; width:auto; padding:0; border:0; } table.checks tr { display:block; padding:14px 0; border-bottom:1px solid var(--line); } }
+
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:56px; }
+  @media (max-width:760px){ .two { grid-template-columns:1fr; gap:32px; } }
+  ul.plain { margin:0; padding-left:1.1em; }
+  ul.plain li { margin-bottom:.7em; }
+  .band { background:var(--surface); }
+
+  details { border-bottom:1px solid var(--line); padding:16px 0; }
+  details:first-of-type { border-top:1px solid var(--line); }
+  summary { cursor:pointer; font-family:var(--serif); font-weight:700; font-size:1.08rem; }
+  details p { margin:10px 0 0; color:var(--muted); max-width:46em; }
+
+  .final { text-align:left; }
+  footer { border-top:1px solid var(--line); padding:28px 0 40px; color:var(--muted); font-size:.88rem; }
+  footer p { margin:0 0 .4em; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#top">Medical Claims and Billing Verification Tool</a>
+    <nav aria-label="Main"><a class="opt" href="#how">How it works</a><a class="opt" href="#privacy">Privacy</a><a href="#pilot">Pilot</a></nav>
+  </div>
+</header>
+
+<main id="top">
+  <div class="hero">
+    <div class="wrap">
+      <div>
+        <h1>Find billing errors before the medical aid does.</h1>
+        <p class="lede">A claims check for South African practices. It flags claims that look wrong, tells you why in plain language, and leaves every decision to your team.</p>
+        <div class="cta">
+          <a class="btn primary" href="mailto:nthodithato@gmail.com?subject=Pilot%20request%3A%20Claims%20verification%20tool">Request a pilot</a>
+          <a class="btn ghost" href="#how">See how it works</a>
+        </div>
+        <p class="status">Pilot stage. We have tested the tool on artificial claims only, and we are looking for practices willing to test it on their own de-identified claims.</p>
+      </div>
+
+      <figure style="margin:0">
+        <div class="ticket" role="img" aria-label="Example flagged claim: the billed amount of R384.91 is 1.47 times the typical R262.06 for this practice and procedure.">
+          <header><span>Claim under review</span><span>Example, artificial data</span></header>
+          <dl>
+            <div class="row"><dt>Diagnosis</dt><dd>J45.9 Asthma, unspecified</dd></div>
+            <div class="row"><dt>Service</dt><dd>Nebulisation</dd></div>
+            <div class="row"><dt>Typical for this practice</dt><dd>R262.06</dd></div>
+            <div class="row"><dt>Amount billed</dt><dd><span class="amount">R384.91<svg viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><ellipse cx="50" cy="20" rx="48" ry="17" pathLength="1"/></svg></span></dd></div>
+          </dl>
+          <div class="flag">
+            <strong>Unusual fee</strong>
+            <p>Fee is 1.47 times the typical amount for this practice and procedure. Check the fee against the tariff and the visit type.</p>
+          </div>
+          <div class="decide" aria-hidden="true"><span>Confirmed error</span><span>False alarm</span><span>Corrected</span></div>
+        </div>
+        <figcaption class="caption">Your reviewer sees the reason, then decides.</figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <section id="how">
+    <div class="wrap">
+      <h2>How it works</h2>
+      <p class="lede">Four steps, and your team stays in charge of every one that matters.</p>
+      <ol class="steps">
+        <li><h3>Export your claims</h3><p>Use the export from your practice software. Every system lays its columns out differently, so we match yours with a short mapping file.</p></li>
+        <li><h3>Remove who the patient is</h3><p>Names, ID numbers and medical aid numbers are never copied. Patient and doctor IDs become codes before the file leaves your computer.</p></li>
+        <li><h3>Claims are checked</h3><p>Each claim gets a risk score. When something looks wrong, it gets a flag with a reason you can act on.</p></li>
+        <li><h3>Your team decides</h3><p>Reviewers mark each flag as a confirmed error, a false alarm or corrected. Every decision is logged with who made it and when.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="checks" class="band">
+    <div class="wrap">
+      <h2>What it checks</h2>
+      <p class="lede">Clear rules that explain themselves, plus a statistical second opinion for what rules cannot see.</p>
+      <table class="checks">
+        <tbody>
+          <tr><th scope="row">Missing information</th><td>Required fields left blank, or supporting information not attached.</td></tr>
+          <tr><th scope="row">Duplicates</th><td>The same claim submitted twice, or resubmitted a day apart.</td></tr>
+          <tr><th scope="row">Date problems</th><td>A claim submitted before the service took place.</td></tr>
+          <tr><th scope="row">Unusual fees</th><td>An amount far from what your practice normally bills for that service. After-hours premiums are allowed for.</td></tr>
+          <tr><th scope="row">Coding mismatches</th><td>A service that does not normally go with the diagnosis, unless a second diagnosis explains it.</td></tr>
+          <tr><th scope="row">Upcoding</th><td>A follow-up visit billed as a standard consultation.</td></tr>
+          <tr><th scope="row">Too many visits</th><td>A fourth visit by the same patient within ten days.</td></tr>
+          <tr><th scope="row">Second opinion</th><td>A model flags claims that resemble ones that previously needed correction. It gives a priority, not a verdict.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="privacy">
+    <div class="wrap two">
+      <div>
+        <h2>You stay in control</h2>
+        <p class="lede" style="margin-top:12px">The tool recommends. It never approves, rejects or changes a claim.</p>
+      </div>
+      <ul class="plain">
+        <li><strong>Personal details stay with you.</strong> Identifiers are replaced with codes using a key that stays on your computer. Without it, nobody can link the codes back to patients.</li>
+        <li><strong>POPIA applies.</strong> Health information is special personal information. We would sign a written agreement first, and we ask your information officer to review it before any data moves.</li>
+        <li><strong>Pilot data has one use.</strong> We propose using it only for the pilot, storing it securely, and deleting or returning it when the pilot ends.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="pilot" class="band">
+    <div class="wrap">
+      <h2>Join the pilot</h2>
+      <p class="lede">We want to find out whether this works on real claims, and we will tell you honestly what we learn.</p>
+      <div class="two">
+        <div>
+          <h3 style="margin-bottom:10px">What we ask for</h3>
+          <ul class="plain">
+            <li>Six to twelve months of claims, a few thousand rows.</li>
+            <li>Dates, ICD-10 codes, tariff codes, amounts and whether each claim had supporting information.</li>
+            <li>The medical aid outcome: paid, rejected or corrected, with the rejection reason.</li>
+            <li>No names, ID numbers, member numbers, contact details or clinical notes.</li>
+          </ul>
+        </div>
+        <div>
+          <h3 style="margin-bottom:10px">What you get back</h3>
+          <ul class="plain">
+            <li>Which of your claims the tool flagged, and why.</li>
+            <li>How many of your actual rejections it would have caught.</li>
+            <li>Which kinds of rejection it cannot catch, such as a lapsed medical aid membership.</li>
+          </ul>
+        </div>
+      </div>
+      <p class="final" style="margin-top:36px"><a class="btn primary" href="mailto:nthodithato@gmail.com?subject=Pilot%20request%3A%20Claims%20verification%20tool">Request a pilot</a></p>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="wrap">
+      <h2 style="margin-bottom:24px">Questions</h2>
+      <details><summary>Does it submit or reject claims?</summary><p>No. It marks claims for review and explains why. Your team decides what happens to each one, and every decision is recorded.</p></details>
+      <details><summary>Which practice software does it work with?</summary><p>Any system that can export claims to a spreadsheet or CSV file. We have tested the importer on artificial exports in two different layouts, and we match each practice&rsquo;s columns with a small mapping file. We have not yet tested it on a real practice system.</p></details>
+      <details><summary>How accurate is it?</summary><p>We do not know yet on real claims. Tests on artificial data show the checks work as designed, but those results say little about real life. Measuring this is the purpose of the pilot.</p></details>
+      <details><summary>Is patient information safe?</summary><p>Identifying details are removed on your computer before anything is shared, and the key to the codes stays with you. A written agreement and a review by your information officer come before any data moves. This page is not legal advice.</p></details>
+      <details><summary>What does it cost?</summary><p>Pilot terms are agreed with each practice. Get in touch and we will talk it through.</p></details>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p><strong>Medical Claims and Billing Verification Tool</strong> by 6.0 Industries</p>
+    <p>Contact: <a href="mailto:nthodithato@gmail.com">nthodithato@gmail.com</a></p>
+    <p>Prototype under development. It supports, and does not replace, the judgement of your billing and clinical staff.</p>
+  </div>
+</footer>
+
+</body>
+</html>
